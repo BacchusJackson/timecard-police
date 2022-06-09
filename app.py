@@ -11,7 +11,7 @@ app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 logging.basicConfig(level=logging.DEBUG)
 
-channels = []
+scheduled = {}
 
 
 @app.message("hello")
@@ -20,30 +20,35 @@ def message_hello(message, say):
 
 
 @app.message("yes")
-def message_yes(message, say, client):
-    if message["channel_id"] in channels:
+def message_yes(message, say, logger):
+    if message["channel"] in scheduled.keys() :
+        scheduled[message["channel"]].pop()
         say("Sweet! I'll leave you alone until tomorrow :smile:")
-        return
 
 
 @app.command("/start")
-def reminders_start(ack, respond, body, logger, client):
+def reminders_start(ack, respond, body, logger, client, request):
     ack()
-    logger.info(body)
+    logger.info(request)
     try:
+        post_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).strftime('%s')
         result = client.chat_scheduleMessage(
             channel=body["channel_id"],
             text="Did you finish your time card?",
-            post_at=(datetime.date.today() + datetime.timedelta(minutes=1)).strftime('%s')
+            post_at=post_time
         )
-        logger.info(result)
-        respond("You've got it bud! I'll bug you to finish your time card")
+        if result["channel"] not in scheduled:
+            scheduled[result["channel"]] = []
+
+        scheduled[result["channel"]].append(result["scheduled_message_id"])
+        result2 = respond("You've got it bud! I'll bug you to finish your time card")
+        logger.info(result2)
 
     except SlackApiError as e:
-        respond("Sorry... something went wrong :sad:")
+        respond("Sorry... something went wrong :cry:")
         logger.error(f"Error scheduling message: {e}")
     except BoltError as e:
-        respond("Sorry... something went really wrong :sad:")
+        respond("Sorry... something went really wrong :cry:")
         logger.error(f"Error in /start command execution {e}")
 
 
