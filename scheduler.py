@@ -23,7 +23,7 @@ async def send_reminder_at(sometime: datetime):
 def check_schedule():
     logger.debug("Opening the schedule.yaml file")
     schedule: dict
-    with open("schedule.yaml", "r+") as file:
+    with open("/data/schedule.yaml", "r+") as file:
         content = file.read()
         logger.debug(content)
         if file.tell() < 1:
@@ -50,7 +50,7 @@ def send_message(channel_id: str):
 def reset_reminders():
     logger.debug("Opening the schedule.yaml file to reset done values")
     schedule: dict
-    with open("schedule.yaml", "w+") as file:
+    with open("/data/schedule.yaml", "w+") as file:
         content = file.read()
         logger.debug(content)
         # Check for a blank file
@@ -84,14 +84,14 @@ async def main():
             et_to_utc(today_at(15, 0)),
             et_to_utc(today_at(15, 1)),
             et_to_utc(today_at(15, 2)),
-            et_to_utc(today_at(15, 51)),
-            et_to_utc(today_at(17, 24)),
-            et_to_utc(today_at(17, 25)),
-            et_to_utc(today_at(17, 26)),
+            et_to_utc(today_at(17, 51)),
+            et_to_utc(today_at(17, 52)),
+            et_to_utc(today_at(17, 53)),
+            et_to_utc(today_at(17, 54)),
         ]
 
-        filtered_schedule = filter_expired(schedule)
         logger.info(f"Schedule: {schedule}")
+        filtered_schedule = filter_expired(schedule)
         logger.info(f'Filtered Schedule: {filtered_schedule}')
         tasks = []
         for dt in filtered_schedule:
@@ -108,6 +108,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    print("STARTING SCHEDULER")
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 def add_to_schedule(channel_id):
     logging.debug("Opening schedule.yaml")
-    with open("schedule.yaml", "w+") as file:
+    with open("/data/schedule.yaml", "w+") as file:
         doc = yaml.full_load(file)
         logging.debug(doc)
         if doc is None:

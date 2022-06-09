@@ -3,7 +3,7 @@ services:
     build: .
     command: python3 app.py
     volumes:
-      - app-data:/app
+      - app-data:/data
     env_file:
       - slack.env
 
@@ -11,7 +11,7 @@ services:
     build: .
     command: python3 scheduler.py
     volumes:
-      - app-data:/app
+      - app-data:/data
     env_file:
       - slack.env
 
