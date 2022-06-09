@@ -9,9 +9,9 @@ app = App(
 
 
 @app.command("/howdy")
-async def command(ack, body, respond):
-    await ack()
-    await respond(f"Howdy! <@{body['user_id']}!")
+def howdy(ack, body, logger):
+    ack()
+    logger.info(body)
 
 
 if __name__ == "__main__":
