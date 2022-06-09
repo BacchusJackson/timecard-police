@@ -42,6 +42,7 @@ def reminders_start(ack, respond, body, logger, client):
         respond("Sorry... something went wrong :sad:")
         logger.error(f"Error scheduling message: {e}")
     except BoltError as e:
+        respond("Sorry... something went really wrong :sad:")
         logger.error(f"Error in /start command execution {e}")
 
 
