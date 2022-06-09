@@ -3,6 +3,7 @@ import logging
 import os
 
 from slack_bolt import App
+from slack_bolt.error import BoltError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_sdk.errors import SlackApiError
 
@@ -32,7 +33,7 @@ def reminders_start(ack, respond, body, logger, client):
         result = client.chat_scheduleMessage(
             channel=body["channel_id"],
             text="Did you finish your time card?",
-            post_at=datetime.date.today() + datetime.timedelta(minutes=1)
+            post_at=(datetime.date.today() + datetime.timedelta(minutes=1)).strftime('%s')
         )
         logger.info(result)
         respond("You've got it bud! I'll bug you to finish your time card")
@@ -40,6 +41,8 @@ def reminders_start(ack, respond, body, logger, client):
     except SlackApiError as e:
         respond("Sorry... something went wrong :sad:")
         logger.error(f"Error scheduling message: {e}")
+    except BoltError as e:
+        logger.error(f"Error in /start command execution {e}")
 
 
 if __name__ == "__main__":
