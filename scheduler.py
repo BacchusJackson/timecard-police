@@ -82,17 +82,35 @@ def filter_expired(dt_schedule: list[datetime]):
     return [element for element in dt_schedule if element > datetime.datetime.utcnow()]
 
 
+def get_schedule() -> list[datetime]:
+    lines: list[str]
+    schedule: list[datetime] = []
+    h: str
+    m: str
+
+    # Read lines from file
+    with open("times.txt") as file:
+        lines = file.readlines()
+        if len(lines) < 1:
+            return []
+
+    # Parse lines into schedule times
+    for line in lines:
+        h, m = line.split(" ")
+        schedule.append(et_to_utc(today_at(int(h), int(m))))
+
+    return schedule
+
+
 async def main():
     while True:
-        schedule = [
-            et_to_utc(today_at(15, 0)),
-            et_to_utc(today_at(15, 1)),
-            et_to_utc(today_at(15, 2)),
-            et_to_utc(today_at(18, 17)),
-            et_to_utc(today_at(18, 18)),
-            et_to_utc(today_at(18, 19)),
-            et_to_utc(today_at(18, 20)),
-        ]
+
+        schedule = []
+        try:
+            schedule = get_schedule()
+        except ValueError as e:
+            logger.error("Invalid value in times file")
+            exit(-1)
 
         logger.info(f"Schedule: {schedule}")
         filtered_schedule = filter_expired(schedule)
