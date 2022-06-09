@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 
+import yaml
 from slack_bolt import App, BoltRequest
 from slack_bolt.error import BoltError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -12,7 +13,11 @@ app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 logging.basicConfig(level=logging.DEBUG)
 
-scheduled = {}
+
+def add_to_schedule(channel_id):
+    with open("schedule.yaml", "w+") as file:
+        doc = yaml.full_load(file)
+        doc["channels"] = {channel_id: {"done": False}}
 
 
 @app.message("hello")
@@ -21,37 +26,22 @@ def message_hello(message, say):
 
 
 @app.message("yes")
-def message_yes(message, say, logger):
-    if message["channel"] in scheduled.keys() :
-        scheduled[message["channel"]].pop()
-        say("Sweet! I'll leave you alone until tomorrow :smile:")
+def message_yes(message, say):
+    say("Sweet! I'll leave you alone until tomorrow :smile:")
 
 
 @app.command("/start")
-def reminders_start(ack, respond, body, logger, client, command, request):
+def reminders_start(ack, respond, body, logger, client, command):
     ack()
     logger.info(command)
 
-    try:
-        post_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).strftime('%s')
-        result = client.chat_scheduleMessage(
-            channel=body["channel_id"],
-            text="Did you finish your time card?",
-            post_at=post_time
-        )
-        if result["channel"] not in scheduled:
-            scheduled[result["channel"]] = []
+    post_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).strftime('%s')
 
-        scheduled[result["channel"]].append(result["scheduled_message_id"])
-        result2: WebhookResponse = respond("You've got it bud! I'll bug you to finish your time card")
-        logger.info(result2.headers)
+    # scheduled[result["channel"]].append(result["scheduled_message_id"])
+    respond("You've got it bud! I'll make sure you don't forget! :thumbsup:")
 
-    except SlackApiError as e:
-        respond("Sorry... something went wrong :cry:")
-        logger.error(f"Error scheduling message: {e}")
-    except BoltError as e:
-        respond("Sorry... something went really wrong :cry:")
-        logger.error(f"Error in /start command execution {e}")
+    logger.info(post_time)
+    add_to_schedule(body["channel_id"])
 
 
 if __name__ == "__main__":
