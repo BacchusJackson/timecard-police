@@ -3,11 +3,8 @@ import logging
 import os
 
 import yaml
-from slack_bolt import App, BoltRequest
-from slack_bolt.error import BoltError
+from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from slack_sdk.errors import SlackApiError
-from slack_sdk.webhook.webhook_response import WebhookResponse
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
@@ -39,14 +36,8 @@ def message_yes(message, say):
 @app.command("/start")
 def reminders_start(ack, respond, body, logger, client, command):
     ack()
-    logger.info(command)
-
-    post_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).strftime('%s')
-
     # scheduled[result["channel"]].append(result["scheduled_message_id"])
     respond("You've got it bud! I'll make sure you don't forget! :thumbsup:")
-
-    logger.info(post_time)
     add_to_schedule(body["channel_id"])
 
 
