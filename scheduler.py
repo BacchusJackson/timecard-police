@@ -85,9 +85,9 @@ async def main():
             et_to_utc(today_at(15, 1)),
             et_to_utc(today_at(15, 2)),
             et_to_utc(today_at(15, 51)),
-            et_to_utc(today_at(16, 54)),
-            et_to_utc(today_at(16, 55)),
-            et_to_utc(today_at(16, 56)),
+            et_to_utc(today_at(17, 6)),
+            et_to_utc(today_at(17, 8)),
+            et_to_utc(today_at(16, 10)),
         ]
 
         filtered_schedule = filter_expired(schedule)

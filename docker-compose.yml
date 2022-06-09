@@ -1,8 +1,19 @@
 services:
-  web:
+  Slack-Bot:
     build: .
+    command: python3 app.py
     volumes:
-      - .:/app
+      - app-data:/app
     env_file:
-        - slack.env
+      - slack.env
 
+  Scheduler:
+    build: .
+    command: python3 scheduler.py
+    volumes:
+      - app-data:/app
+    env_file:
+      - slack.env
+
+volumes:
+  app-data:
