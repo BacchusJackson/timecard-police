@@ -6,6 +6,7 @@ from slack_bolt import App
 from slack_bolt.error import BoltError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_sdk.errors import SlackApiError
+from slack_sdk.webhook.webhook_response import WebhookResponse
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
@@ -41,8 +42,8 @@ def reminders_start(ack, respond, body, logger, client, request):
             scheduled[result["channel"]] = []
 
         scheduled[result["channel"]].append(result["scheduled_message_id"])
-        result2 = respond("You've got it bud! I'll bug you to finish your time card")
-        logger.info(result2)
+        result2: WebhookResponse = respond("You've got it bud! I'll bug you to finish your time card")
+        logger.info(result2.body)
 
     except SlackApiError as e:
         respond("Sorry... something went wrong :cry:")
