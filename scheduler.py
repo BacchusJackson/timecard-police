@@ -85,12 +85,13 @@ async def main():
             et_to_utc(today_at(15, 1)),
             et_to_utc(today_at(15, 2)),
             et_to_utc(today_at(15, 51)),
-            et_to_utc(today_at(17, 6)),
-            et_to_utc(today_at(17, 8)),
-            et_to_utc(today_at(16, 10)),
+            et_to_utc(today_at(17, 24)),
+            et_to_utc(today_at(17, 25)),
+            et_to_utc(today_at(17, 26)),
         ]
 
         filtered_schedule = filter_expired(schedule)
+        logger.info(f"Schedule: {schedule}")
         logger.info(f'Filtered Schedule: {filtered_schedule}')
         tasks = []
         for dt in filtered_schedule:
