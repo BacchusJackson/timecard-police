@@ -2,11 +2,9 @@ import logging
 import os
 
 from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-app = App(
-    token=os.environ.get("SLACK_BOT_TOKEN"),
-    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
-)
+app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -18,4 +16,4 @@ def message_hello(message, say):
 
 if __name__ == "__main__":
     print(f"Logging set to {app.logger.level}")
-    app.start(port=int(os.environ.get("PORT", 3000)))
+    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
