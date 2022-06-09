@@ -2,21 +2,19 @@ import asyncio
 import logging
 import os
 import datetime
-from slack_sdk.web import WebClient
-from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.errors import SlackApiError
 import yaml
 
-client = SocketModeClient(
-    app_token=os.environ.get("SLACK_APP_TOKEN"),
-    web_client=WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
-)
+from slack_bolt import App
+
+app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
 
 SCHEDULE_FILE = "/data/schedule.yaml"
+
 
 async def send_reminder_at(sometime: datetime):
     sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
@@ -47,7 +45,7 @@ def check_schedule():
 
 def send_message(channel_id: str):
     try:
-        result = client.web_client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
+        result = app.client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
         logger.info(result)
     except SlackApiError as e:
         logger.error(f"Error posting Message to channel {channel_id}: {e}")
