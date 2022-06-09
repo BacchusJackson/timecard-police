@@ -25,18 +25,16 @@ async def send_reminder_at(sometime: datetime):
 
 
 def check_schedule():
-    logger.debug("Opening the schedule.yaml file")
+    logger.debug("check_schedule Opening the schedule.yaml file")
     schedule: dict
     with open("/data/schedule.yaml", "w+") as file:
-        content = file.read()
-        logger.debug(content)
-        if file.tell() < 1:
-            logger.info("schedule.yaml has no content, cannot check schedule")
+        doc = yaml.full_load(file)
+        logging.debug(doc)
+        if doc is None:
+            logger.debug("schedule.yaml could not be parsed")
             return
-        schedule = yaml.full_load(content)
+        channels: dict = doc.get("channels")
 
-    logger.debug(schedule)
-    channels: dict = schedule.get("channels")
     logger.debug("Checking keys for the channel id")
     for c_id in channels.keys():
         if not channels[c_id].get("done"):
@@ -55,17 +53,15 @@ def reset_reminders():
     logger.debug("Opening the schedule.yaml file to reset done values")
     schedule: dict
     with open("/data/schedule.yaml", "w+") as file:
-        content = file.read()
-        logger.debug(content)
-        # Check for a blank file
-        if file.tell() < 1:
-            logger.info("schedule.yaml has no content, cannot reset reminders")
+        doc = yaml.full_load(file)
+        logging.debug(doc)
+        if doc is None:
+            logger.debug("schedule.yaml could not be parsed")
             return
-        schedule = yaml.full_load(content)
-        channels: dict = schedule.get("channels")
-        for c_id in channels.keys():
-            channels[c_id]["done"] = False
-        yaml.dump(schedule, file)
+        schedule: dict = doc
+    for c_id in schedule.get("channels").keys():
+        schedule[c_id]["done"] = False
+    yaml.dump(schedule, file)
 
 
 def today_at(hour, minutes) -> datetime:
@@ -82,9 +78,9 @@ def filter_expired(dt_schedule: list[datetime]):
     return [element for element in dt_schedule if element > datetime.datetime.utcnow()]
 
 
-def get_schedule() -> list[datetime]:
+def get_schedule_times() -> list[datetime]:
     lines: list[str]
-    schedule: list[datetime] = []
+    schedule_times: list[datetime] = []
     h: str
     m: str
 
@@ -97,24 +93,24 @@ def get_schedule() -> list[datetime]:
     # Parse lines into schedule times
     for line in lines:
         h, m = line.split(" ")
-        schedule.append(et_to_utc(today_at(int(h), int(m))))
+        schedule_times.append(et_to_utc(today_at(int(h), int(m))))
 
-    return schedule
+    return schedule_times
 
 
 async def main():
     while True:
 
-        schedule = []
+        schedule_times = []
         try:
-            schedule = get_schedule()
+            schedule_times = get_schedule_times()
         except ValueError as e:
             logger.error("Invalid value in times file")
             exit(-1)
 
-        logger.info(f"Schedule: {schedule}")
-        filtered_schedule = filter_expired(schedule)
-        logger.info(f'Filtered Schedule: {filtered_schedule}')
+        logger.info(f"Schedule Times: {schedule_times}")
+        filtered_schedule = filter_expired(schedule_times)
+        logger.info(f'Filtered Schedule Times: {filtered_schedule}')
         tasks = []
         for dt in filtered_schedule:
             tasks.append(asyncio.create_task(send_reminder_at(dt)))
