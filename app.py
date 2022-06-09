@@ -14,6 +14,7 @@ app.logger.setLevel(logging.DEBUG)
 @app.command("/howdy")
 def handle_some_command(ack, body, respond, command, logger):
     ack()
+    logger.info("Message Received!")
     logger.info(body)
     respond("Howdy! From Timecard Police Bot")
 
