@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 
-from slack_bolt import App
+from slack_bolt import App, BoltRequest
 from slack_bolt.error import BoltError
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_sdk.errors import SlackApiError
@@ -28,9 +28,10 @@ def message_yes(message, say, logger):
 
 
 @app.command("/start")
-def reminders_start(ack, respond, body, logger, client, request):
+def reminders_start(ack, respond, body, logger, client, command, request):
     ack()
-    logger.info(request)
+    logger.info(command)
+
     try:
         post_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).strftime('%s')
         result = client.chat_scheduleMessage(
@@ -43,7 +44,7 @@ def reminders_start(ack, respond, body, logger, client, request):
 
         scheduled[result["channel"]].append(result["scheduled_message_id"])
         result2: WebhookResponse = respond("You've got it bud! I'll bug you to finish your time card")
-        logger.info(result2.body)
+        logger.info(result2.headers)
 
     except SlackApiError as e:
         respond("Sorry... something went wrong :cry:")
