@@ -8,7 +8,7 @@ app = App(
     signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
 )
 
-app.logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 
 @app.message("hello")
