@@ -24,11 +24,11 @@ def check_schedule():
     logger.debug("Opening the schedule.yaml file")
     schedule: dict
     with open("schedule.yaml", "r+") as file:
+        content = file.read()
+        logger.debug(content)
         if file.tell() < 1:
             logger.info("schedule.yaml has no content, cannot check schedule")
             return
-        content = file.read()
-        logger.debug(content)
         schedule = yaml.full_load(content)
 
     logger.debug(schedule)
@@ -52,11 +52,11 @@ def reset_reminders():
     schedule: dict
     with open("schedule.yaml", "w+") as file:
         content = file.read()
+        logger.debug(content)
         # Check for a blank file
         if file.tell() < 1:
             logger.info("schedule.yaml has no content, cannot reset reminders")
             return
-        logger.debug(content)
         schedule = yaml.full_load(content)
         channels: dict = schedule.get("channels")
         for c_id in channels.keys():

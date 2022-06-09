@@ -1,5 +1,5 @@
 services:
-  Slack-Bot:
+  slack-bot:
     build: .
     command: python3 app.py
     volumes:
@@ -7,7 +7,7 @@ services:
     env_file:
       - slack.env
 
-  Scheduler:
+  scheduler:
     build: .
     command: python3 scheduler.py
     volumes:
