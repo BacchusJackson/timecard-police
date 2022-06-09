@@ -9,9 +9,9 @@ app = App(
 
 
 @app.command("/howdy")
-def howdy(ack, body, logger):
+def howdy(ack, say, command):
     ack()
-    logger.info(body)
+    say("Howdy! From Timecard Police Bot")
 
 
 if __name__ == "__main__":
