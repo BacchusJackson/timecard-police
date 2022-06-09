@@ -29,6 +29,7 @@ def message_yes(message, say, client):
 @app.command("/start")
 def reminders_start(ack, respond, body, logger, client):
     ack()
+    logger.info(body)
     try:
         result = client.chat_scheduleMessage(
             channel=body["channel_id"],
