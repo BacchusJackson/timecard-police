@@ -27,7 +27,7 @@ async def send_reminder_at(sometime: datetime):
 def check_schedule():
     logger.debug("check_schedule Opening the schedule.yaml file")
     schedule: dict
-    with open("/data/schedule.yaml", "w+") as file:
+    with open("/data/schedule.yaml", "r") as file:
         doc = yaml.full_load(file)
         logging.debug(doc)
         if doc is None:
@@ -52,16 +52,17 @@ def send_message(channel_id: str):
 def reset_reminders():
     logger.debug("Opening the schedule.yaml file to reset done values")
     schedule: dict
-    with open("/data/schedule.yaml", "w+") as file:
+    with open("/data/schedule.yaml", "r") as file:
         doc = yaml.full_load(file)
         logging.debug(doc)
         if doc is None:
             logger.debug("schedule.yaml could not be parsed")
             return
-        schedule: dict = doc
+        schedule = doc
     for c_id in schedule.get("channels").keys():
         schedule[c_id]["done"] = False
-    yaml.dump(schedule, file)
+    with open("/data/schedule.yaml", "w") as file:
+        yaml.dump(schedule, file)
 
 
 def today_at(hour, minutes) -> datetime:
@@ -85,7 +86,7 @@ def get_schedule_times() -> list[datetime]:
     m: str
 
     # Read lines from file
-    with open("times.txt") as file:
+    with open("times.txt", "r") as file:
         lines = file.readlines()
         if len(lines) < 1:
             return []
