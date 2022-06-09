@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
 
+SCHEDULE_FILE = "/data/schedule.yaml"
 
 async def send_reminder_at(sometime: datetime):
     sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
@@ -27,7 +28,10 @@ async def send_reminder_at(sometime: datetime):
 def check_schedule():
     logger.debug("check_schedule Opening the schedule.yaml file")
     schedule: dict
-    with open("/data/schedule.yaml", "r") as file:
+    if not os.path.exists(SCHEDULE_FILE):
+        logger.debug("schedule.yaml does not exist yet. Skip check schedule")
+        return
+    with open(SCHEDULE_FILE, "r") as file:
         doc = yaml.full_load(file)
         logging.debug(doc)
         if doc is None:
@@ -52,7 +56,11 @@ def send_message(channel_id: str):
 def reset_reminders():
     logger.debug("Opening the schedule.yaml file to reset done values")
     schedule: dict
-    with open("/data/schedule.yaml", "r") as file:
+    if not os.path.exists(SCHEDULE_FILE):
+        logger.debug("schedule.yaml does not exist yet. Skip reset")
+        return
+
+    with open(SCHEDULE_FILE, "r") as file:
         doc = yaml.full_load(file)
         logging.debug(doc)
         if doc is None:
@@ -61,7 +69,7 @@ def reset_reminders():
         schedule = doc
     for c_id in schedule.get("channels").keys():
         schedule[c_id]["done"] = False
-    with open("/data/schedule.yaml", "w") as file:
+    with open(SCHEDULE_FILE, "w") as file:
         yaml.dump(schedule, file)
 
 
