@@ -27,7 +27,7 @@ async def send_reminder_at(sometime: datetime):
 def check_schedule():
     logger.debug("Opening the schedule.yaml file")
     schedule: dict
-    with open("/data/schedule.yaml", "r+") as file:
+    with open("/data/schedule.yaml", "w+") as file:
         content = file.read()
         logger.debug(content)
         if file.tell() < 1:
@@ -45,7 +45,7 @@ def check_schedule():
 
 def send_message(channel_id: str):
     try:
-        result = client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
+        result = client.web_client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
         logger.info(result)
     except SlackApiError as e:
         logger.error(f"Error posting Message to channel {channel_id}: {e}")
@@ -88,10 +88,10 @@ async def main():
             et_to_utc(today_at(15, 0)),
             et_to_utc(today_at(15, 1)),
             et_to_utc(today_at(15, 2)),
-            et_to_utc(today_at(17, 51)),
-            et_to_utc(today_at(17, 52)),
-            et_to_utc(today_at(17, 53)),
-            et_to_utc(today_at(17, 54)),
+            et_to_utc(today_at(18, 17)),
+            et_to_utc(today_at(18, 18)),
+            et_to_utc(today_at(18, 19)),
+            et_to_utc(today_at(18, 20)),
         ]
 
         logger.info(f"Schedule: {schedule}")
