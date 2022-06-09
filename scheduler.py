@@ -3,11 +3,17 @@ import logging
 import os
 import datetime
 from slack_sdk.errors import SlackApiError
+from slack_sdk.web.async_client import AsyncWebClient
+from slack_sdk.socket_mode.aiohttp import SocketModeClient
+
 import yaml
 
-from slack_bolt import App
+# Initialize SocketModeClient with an app-level token + WebClient
+client = SocketModeClient(
+    app_token=os.environ.get("SLACK_APP_TOKEN"),
+    web_client=AsyncWebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+)
 
-app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +51,7 @@ def check_schedule():
 
 def send_message(channel_id: str):
     try:
-        result = app.client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
+        result = client.web_client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
         logger.info(result)
     except SlackApiError as e:
         logger.error(f"Error posting Message to channel {channel_id}: {e}")
@@ -106,6 +112,7 @@ def get_schedule_times() -> list[datetime]:
 
 
 async def main():
+    await client.connect()
     while True:
 
         schedule_times = []
