@@ -2,11 +2,15 @@ import asyncio
 import logging
 import os
 import datetime
-from slack_sdk import WebClient
+from slack_sdk.web import WebClient
+from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.errors import SlackApiError
 import yaml
 
-client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+client = SocketModeClient(
+    app_token=os.environ.get("SLACK_APP_TOKEN"),
+    web_client=WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+)
 
 logger = logging.getLogger(__name__)
 
