@@ -18,7 +18,7 @@ class Channel:
         self.client = client
 
     async def send_message(self):
-        logger.info(f"Sending a message to {self.name} with client: {self.client}")
+        logger.info(f"Sending a message to {self.name}")
         res = await self.client.chat_postMessage(channel=self.name, text="Have you completed your time card?")
         logger.debug(res)
 
@@ -57,6 +57,7 @@ class Scheduler:
 
     def add_channel(self, channel_id):
         self.channels.append(Channel(channel_id, self.client))
+        logger.info(f"New Channel Register -> {channel_id}")
 
     async def send_at(self, sometime: datetime):
         sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
