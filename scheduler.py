@@ -39,19 +39,18 @@ class Scheduler:
         logger.info("Scheduler Started")
         while True:
             self.times = [
-                et_to_utc(today_at(17, 50, 00)),
-                et_to_utc(today_at(17, 50, 30)),
-                et_to_utc(today_at(17, 51, 00)),
-                et_to_utc(today_at(17, 51, 30)),
-                et_to_utc(today_at(17, 52, 00)),
-                et_to_utc(today_at(17, 52, 30)),
+                et_to_utc(today_at(18, 2, 00)),
+                et_to_utc(today_at(18, 2, 30)),
+                et_to_utc(today_at(18, 3, 00)),
+                et_to_utc(today_at(18, 3, 30)),
+                et_to_utc(today_at(18, 4, 00)),
+                et_to_utc(today_at(18, 4, 30)),
             ]
-
+            logger.info(f"Current Time UTC: {datetime.datetime.utcnow()}")
             logger.info(f"Scheduled Times [{len(self.times)}]: {self.times}")
             self.tasks = []
             for t in self.times:
-                for c in self.channels:
-                    self.tasks.append(asyncio.create_task(send_at(c, t)))
+                self.tasks.append(asyncio.create_task(self.send_at(t)))
 
             logger.info(f"Tasks Scheduled: {len(self.tasks)}")
             await asyncio.gather(*self.tasks)
@@ -67,14 +66,14 @@ class Scheduler:
     def add_channel(self, channel_id):
         self.channels.append(Channel(channel_id, self.client))
 
-
-async def send_at(c: Channel, sometime: datetime):
-    sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
-    if sleep_for < 0:
-        return
-    await asyncio.sleep(sleep_for)
-    if not c.timecard_done:
-        await c.send_message()
+    async def send_at(self, sometime: datetime):
+        sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
+        if sleep_for < 0:
+            return
+        await asyncio.sleep(sleep_for)
+        for c in self.channels:
+            if not c.timecard_done:
+                await c.send_message()
 
 
 def today_at(hour, minutes, seconds=0) -> datetime:
