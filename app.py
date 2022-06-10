@@ -10,8 +10,10 @@ app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
 scheduler = Scheduler(app.client)
 tasks: list[asyncio.Task] = []
 
+# Fri 10 Jun 2022 17:34
+TIME_FORMAT = "%a %d %b %Y %H:%M"
 # Set up logging
-logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO)
+logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO, datefmt=TIME_FORMAT)
 
 
 @app.message("hello")

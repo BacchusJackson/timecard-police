@@ -4,6 +4,8 @@ import datetime
 from slack_bolt.app.async_app import AsyncWebClient
 import logging
 
+TIME_FORMAT = "%a %d %b %Y %H:%M"
+
 
 class Channel:
     name: str
@@ -36,8 +38,9 @@ class Scheduler:
         logging.info("Scheduler Started")
         while True:
             self.times = _get_schedule_times()
-            logging.info(f"Current Time UTC: {datetime.datetime.utcnow()}")
-            logging.info(f"Scheduled Times [{len(self.times)}]: {self.times}")
+            logging.info(f"Current Time UTC: {datetime.datetime.utcnow().strftime(TIME_FORMAT)}")
+            times_str = ', '.join([t.strftime(TIME_FORMAT) for t in self.times])
+            logging.info(f"Scheduled Times [{len(self.times)}]: {times_str}")
             self.tasks = []
             for t in self.times:
                 self.tasks.append(asyncio.create_task(self.send_at(t)))
@@ -48,7 +51,7 @@ class Scheduler:
             for c in self.channels:
                 c.timecard_done = False
 
-            logging.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
+            logging.info(f"Current UTC Time is: {datetime.datetime.utcnow().strftime(TIME_FORMAT)}")
             wake_time = today_at(0, 1) + datetime.timedelta(days=1)
             logging.info(f"Sleeping until {wake_time.isoformat()}")
             await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
