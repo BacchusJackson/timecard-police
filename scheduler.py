@@ -14,7 +14,6 @@ client = SocketModeClient(
     web_client=AsyncWebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
 )
 
-
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
@@ -112,6 +111,13 @@ def get_schedule_times() -> list[datetime]:
 
 
 async def main():
+    from slack_sdk.socket_mode.response import SocketModeResponse
+    from slack_sdk.socket_mode.request import SocketModeRequest
+
+    async def process(client: SocketModeClient, req: SocketModeRequest):
+        pass
+
+    client.socket_mode_request_listeners.append(process)
     await client.connect()
     await asyncio.sleep(float("inf"))
     # while True:
