@@ -41,11 +41,18 @@ async def reminders_start(ack, respond, body, logger, client, command):
     add_to_schedule(body["channel_id"])
 
 
+async def test_func():
+    await asyncio.sleep(2)
+    print("TEST FUNCTION")
+
+
 async def main():
     handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
     await handler.start_async()
+    await test_func()
 
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())
