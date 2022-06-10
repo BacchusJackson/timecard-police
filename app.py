@@ -8,6 +8,7 @@ from scheduler import Scheduler
 
 app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
 scheduler = Scheduler(app.client)
+tasks: list[asyncio.Task] = []
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -32,14 +33,18 @@ async def reminders_start(ack, respond, body):
 
 async def main():
     handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
-    task1 = asyncio.create_task(handler.start_async())
-    task2 = asyncio.create_task(scheduler.start_async())
-    await asyncio.gather(task1, task2)
+
+    tasks.append(asyncio.create_task(handler.start_async()))
+    tasks.append(asyncio.create_task(scheduler.start_async()))
+    await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("INTERRUPTED, SHUTTING DOWN")
-        pass
+        logging.info("Keyboard Interrupt, Gracefully Shutting down")
+        logging.debug("Cancelling Tasks...")
+        for t in tasks:
+            t.cancel()
+        logging.info("Done!")

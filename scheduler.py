@@ -33,12 +33,18 @@ class Scheduler:
     def __init__(self, client):
         self.client = client
         self.channels = []
-        self.times = _gen_time_list(2)
+        self.times = [
+            today_at(17, 35, 00),
+            today_at(17, 35, 30),
+            today_at(17, 36, 00),
+            today_at(17, 36, 30),
+            today_at(17, 37, 00),
+            today_at(17, 37, 30),
+        ]
 
     async def start_async(self):
         logger.info("STARTED PROCESS")
         while True:
-            self.times = _gen_time_list(5)
             self.tasks = []
             for t in self.times:
                 for c in self.channels:
