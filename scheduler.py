@@ -33,29 +33,38 @@ class Scheduler:
     def __init__(self, client):
         self.client = client
         self.channels = []
-        self.times = [
-            today_at(17, 35, 00),
-            today_at(17, 35, 30),
-            today_at(17, 36, 00),
-            today_at(17, 36, 30),
-            today_at(17, 37, 00),
-            today_at(17, 37, 30),
-        ]
+        self.times = []
 
     async def start_async(self):
-        logger.info("STARTED PROCESS")
+        logger.info("Scheduler Started")
         while True:
-            self.tasks = []
-            for t in self.times:
-                for c in self.channels:
-                    self.tasks.append(asyncio.create_task(send_at(c, t)))
+            self.times = [
+                et_to_utc(today_at(17, 44, 00)),
+                et_to_utc(today_at(17, 44, 30)),
+                et_to_utc(today_at(17, 45, 00)),
+                et_to_utc(today_at(17, 45, 30)),
+                et_to_utc(today_at(17, 46, 00)),
+                et_to_utc(today_at(17, 46, 30)),
+            ]
+            await self.schedule_loop()
 
-            await asyncio.gather(*self.tasks)
-            logger.info("Done, reset")
+    async def schedule_loop(self):
+        logger.info(f"Schedule Times [{len(self.times)}]: {self.times}")
+        self.tasks = []
+        for t in self.times:
             for c in self.channels:
-                c.timecard_done = False
-            logger.info("Sleeping for 5")
-            await asyncio.sleep(5)
+                self.tasks.append(asyncio.create_task(send_at(c, t)))
+
+        logger.info(f"Tasks Scheduled: {len(self.tasks)}")
+        await asyncio.gather(*self.tasks)
+        logger.info("Done, resetting Channel reminders")
+        for c in self.channels:
+            c.timecard_done = False
+
+        logger.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
+        wake_time = today_at(0, 1) + datetime.timedelta(days=1)
+        logger.info(f"Sleeping until {wake_time.isoformat()}")
+        await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
 
     def add_channel(self, channel_id):
         self.channels.append(Channel(channel_id, self.client))
