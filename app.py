@@ -48,8 +48,9 @@ async def test_func():
 
 async def main():
     handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
-    await handler.start_async()
-    await test_func()
+    task1 = asyncio.create_task(handler.start_async())
+    task2 = asyncio.create_task(test_func())
+    await asyncio.gather(task1, task2)
 
 
 if __name__ == "__main__":
