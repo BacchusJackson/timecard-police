@@ -6,6 +6,7 @@ import os
 import yaml
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
+from scheduler import Scheduler
 
 app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
 
@@ -43,36 +44,15 @@ async def reminders_start(ack, respond, body):
     add_to_schedule(body["channel_id"])
 
 
-async def scheduler():
-    await asyncio.sleep(5)
-    if not os.path.exists(SCHEDULE_FILE):
-        logging.debug("schedule.yaml does not exist yet. Skip check schedule")
-        return
-
-    logging.debug(f"Scheduler Task is opening {SCHEDULE_FILE} to check for channels")
-    schedule = []
-    with open(SCHEDULE_FILE, "r") as file:
-        doc = yaml.full_load(file)
-        logging.debug(doc)
-        if doc in None:
-            logging.debug(f"{SCHEDULE_FILE} is None after loading yaml")
-            return
-        schedule = doc
-
-    for c_id in schedule['channels'].keys():
-        if schedule['channels'][c_id]["done"]:
-            logging.debug(f"Sending a message to {c_id}")
-            result = await app.client.chat_postMessage(
-                channel=c_id,
-                text="Hey! Did you complete your time card?"
-            )
-            logging.debug(f"API Result: {result}")
-
-
 async def main():
     handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
     task1 = asyncio.create_task(handler.start_async())
-    task2 = asyncio.create_task(scheduler())
+
+    scheduler = Scheduler(1)
+    scheduler.add_channel("ABC-1")
+    scheduler.add_channel("ABC-2")
+
+    task2 = asyncio.create_task(scheduler.main())
     await asyncio.gather(task1, task2)
 
 

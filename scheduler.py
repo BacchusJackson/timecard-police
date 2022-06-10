@@ -1,155 +1,85 @@
 import asyncio
-import logging
-import os
 import datetime
-from slack_sdk.errors import SlackApiError
-from slack_sdk.web.async_client import AsyncWebClient
-from slack_sdk.socket_mode.aiohttp import SocketModeClient
 
-import yaml
 
-# Initialize SocketModeClient with an app-level token + WebClient
-client = SocketModeClient(
-    app_token=os.environ.get("SLACK_APP_TOKEN"),
-    web_client=AsyncWebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
-)
+# from slack_sdk.socket_mode.aiohttp import SocketModeClient
+import logging
 
 logger = logging.getLogger(__name__)
-
 logging.basicConfig(level=logging.DEBUG)
 
-SCHEDULE_FILE = "/data/schedule.yaml"
+
+class Channel:
+    name: str
+    timecard_done: bool
+    client: int
+
+    def __init__(self, channel_id: str, client):
+        self.name = channel_id
+        self.timecard_done = False
+        self.client = client
+
+    def send_message(self):
+        logger.info(f"Sending a message to {self.name} with client: {self.client}")
 
 
-async def send_reminder_at(sometime: datetime):
+class Scheduler:
+    client: int
+    tasks: list
+    channels: list[Channel]
+    times: list[datetime]
+
+    def __init__(self, socket_client):
+        self.client = socket_client
+        self.channels = []
+        self.times = _gen_time_list(2)
+
+    async def main(self):
+        logger.info("STARTED PROCESS")
+        while True:
+            self.times = _gen_time_list(2)
+            self.tasks = []
+            for t in self.times:
+                for c in self.channels:
+                    self.tasks.append(asyncio.create_task(send_at(c, t)))
+
+            await asyncio.gather(*self.tasks)
+            logger.info("Done, reset")
+            for c in self.channels:
+                c.timecard_done = False
+            logger.info("Sleeping for 5")
+            await asyncio.sleep(5)
+
+    def add_channel(self, channel_id):
+        self.channels.append(Channel(channel_id, self.client))
+
+
+async def send_at(c: Channel, sometime: datetime):
     sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
+    if sleep_for < 0:
+        return
     await asyncio.sleep(sleep_for)
-    logger.info(f"Task Activated, Slept for {sleep_for:.2f} seconds")
-    check_schedule()
+    if not c.timecard_done:
+        c.send_message()
 
 
-def check_schedule():
-    logger.debug("check_schedule Opening the schedule.yaml file")
-    schedule: dict
-    if not os.path.exists(SCHEDULE_FILE):
-        logger.debug("schedule.yaml does not exist yet. Skip check schedule")
-        return
-    with open(SCHEDULE_FILE, "r") as file:
-        doc = yaml.full_load(file)
-        logging.debug(doc)
-        if doc is None:
-            logger.debug("schedule.yaml could not be parsed")
-            return
-        channels: dict = doc.get("channels")
-
-    logger.debug("Checking keys for the channel id")
-    for c_id in channels.keys():
-        if not channels[c_id].get("done"):
-            logger.debug(f"Sending a Reminder to {c_id} ...")
-
-
-def send_message(channel_id: str):
-    try:
-        result = client.web_client.chat_postMessage(channel=channel_id, text="Hey! Did you complete your time card?")
-        logger.info(result)
-    except SlackApiError as e:
-        logger.error(f"Error posting Message to channel {channel_id}: {e}")
-
-
-def reset_reminders():
-    logger.debug("Opening the schedule.yaml file to reset done values")
-    schedule: dict
-    if not os.path.exists(SCHEDULE_FILE):
-        logger.debug("schedule.yaml does not exist yet. Skip reset")
-        return
-
-    with open(SCHEDULE_FILE, "r") as file:
-        doc = yaml.full_load(file)
-        logging.debug(doc)
-        if doc is None:
-            logger.debug("schedule.yaml could not be parsed")
-            return
-        schedule = doc
-    for c_id in schedule.get("channels").keys():
-        schedule[c_id]["done"] = False
-    with open(SCHEDULE_FILE, "w") as file:
-        yaml.dump(schedule, file)
-
-
-def today_at(hour, minutes) -> datetime:
+def today_at(hour, minutes, seconds=0) -> datetime:
     now = datetime.datetime.utcnow()
-    return datetime.datetime(now.year, now.month, now.day, hour, minutes)
+    return datetime.datetime(now.year, now.month, now.day, hour, minutes, seconds)
 
 
 def et_to_utc(et_date: datetime) -> datetime:
     return et_date + datetime.timedelta(hours=4)
 
 
-def filter_expired(dt_schedule: list[datetime]):
-    logger.info(f"Current UTC Time: {datetime.datetime.utcnow()}")
-    return [element for element in dt_schedule if element > datetime.datetime.utcnow()]
-
-
-def get_schedule_times() -> list[datetime]:
-    lines: list[str]
-    schedule_times: list[datetime] = []
-    h: str
-    m: str
-
-    # Read lines from file
-    with open("times.txt", "r") as file:
-        lines = file.readlines()
-        if len(lines) < 1:
-            return []
-
-    # Parse lines into schedule times
-    for line in lines:
-        h, m = line.split(" ")
-        schedule_times.append(et_to_utc(today_at(int(h), int(m))))
-
-    return schedule_times
-
-
-async def main():
-    from slack_sdk.socket_mode.response import SocketModeResponse
-    from slack_sdk.socket_mode.request import SocketModeRequest
-
-    async def process(client: SocketModeClient, req: SocketModeRequest):
-        pass
-
-    client.socket_mode_request_listeners.append(process)
-    await client.connect()
-    await asyncio.sleep(float("inf"))
-    # while True:
-    #
-    #     schedule_times = []
-    #     try:
-    #         schedule_times = get_schedule_times()
-    #     except ValueError as e:
-    #         logger.error("Invalid value in times file")
-    #         exit(-1)
-    #
-    #     logger.info(f"Schedule Times: {schedule_times}")
-    #     filtered_schedule = filter_expired(schedule_times)
-    #     logger.info(f'Filtered Schedule Times: {filtered_schedule}')
-    #     tasks = []
-    #     for dt in filtered_schedule:
-    #         tasks.append(asyncio.create_task(send_reminder_at(dt)))
-    #
-    #     await asyncio.gather(*tasks)
-    #     logger.info("All Schedule tasks complete for the day!")
-    #     logger.info("Resetting statuses on Schedule...")
-    #     reset_reminders()
-    #     logger.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
-    #     wake_time = today_at(0, 1) + datetime.timedelta(days=1)
-    #     logger.info(f"Sleeping until {wake_time.isoformat()}")
-    #     await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
+def _gen_time_list(count) -> list[datetime]:
+    temp_times = []
+    for i in range(count):
+        temp_times.append(datetime.datetime.utcnow() + datetime.timedelta(seconds=5 * (i + 1)))
+    return temp_times
 
 
 if __name__ == "__main__":
-    print("STARTING SCHEDULER")
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("INTERRUPTED, SHUTTING DOWN")
-        pass
+    scheduler = Scheduler(1)
+    scheduler.add_channel("ABC-123")
+    asyncio.run(scheduler.main())
