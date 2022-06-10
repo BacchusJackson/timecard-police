@@ -53,7 +53,7 @@ class Scheduler:
 
             logging.info(f"Current UTC Time is: {datetime.datetime.utcnow().strftime(TIME_FORMAT)}")
             wake_time = today_at(0, 1) + datetime.timedelta(days=1)
-            logging.info(f"Sleeping until {wake_time.isoformat()}")
+            logging.info(f"Sleeping until {wake_time.strftime(TIME_FORMAT)}")
             await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
 
     def add_channel(self, channel_id):
