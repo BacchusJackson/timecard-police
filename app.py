@@ -10,7 +10,7 @@ app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
 scheduler = Scheduler(app.client)
 tasks: list[asyncio.Task] = []
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 @app.message("hello")
@@ -26,7 +26,6 @@ async def message_yes(message, say):
 @app.command("/start")
 async def reminders_start(ack, respond, body):
     await ack()
-    # scheduled[result["channel"]].append(result["scheduled_message_id"])
     await respond("You've got it bud! I'll make sure you don't forget! :thumbsup:")
     scheduler.add_channel(body["channel_id"])
 

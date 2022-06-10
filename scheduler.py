@@ -5,7 +5,6 @@ from slack_bolt.app.async_app import AsyncWebClient
 import logging
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class Channel:
@@ -38,14 +37,7 @@ class Scheduler:
     async def start_async(self):
         logger.info("Scheduler Started")
         while True:
-            self.times = [
-                et_to_utc(today_at(18, 2, 00)),
-                et_to_utc(today_at(18, 2, 30)),
-                et_to_utc(today_at(18, 3, 00)),
-                et_to_utc(today_at(18, 3, 30)),
-                et_to_utc(today_at(18, 4, 00)),
-                et_to_utc(today_at(18, 4, 30)),
-            ]
+            self.times = _get_schedule_times()
             logger.info(f"Current Time UTC: {datetime.datetime.utcnow()}")
             logger.info(f"Scheduled Times [{len(self.times)}]: {self.times}")
             self.tasks = []
@@ -90,3 +82,23 @@ def _gen_time_list(count) -> list[datetime]:
     for i in range(count):
         temp_times.append(datetime.datetime.utcnow() + datetime.timedelta(seconds=5 * (i + 1)))
     return temp_times
+
+
+def _get_schedule_times() -> list[datetime]:
+    lines: list[str]
+    schedule_times: list[datetime] = []
+    h: str
+    m: str
+
+    # Read lines from file
+    with open("times.txt", "r") as file:
+        lines = file.readlines()
+        if len(lines) < 1:
+            return []
+
+    # Parse lines into schedule times
+    for line in lines:
+        h, m = line.split(" ")
+        schedule_times.append(et_to_utc(today_at(int(h), int(m))))
+
+    return schedule_times
