@@ -11,11 +11,7 @@ scheduler = Scheduler(app.client)
 tasks: list[asyncio.Task] = []
 
 # Set up logging
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-ch.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
-
-app.logger.addHandler(ch)
+logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO)
 
 
 @app.message("hello")

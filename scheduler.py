@@ -4,8 +4,6 @@ import datetime
 from slack_bolt.app.async_app import AsyncWebClient
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class Channel:
     name: str
@@ -18,9 +16,9 @@ class Channel:
         self.client = client
 
     async def send_message(self):
-        logger.info(f"Sending a message to {self.name}")
+        logging.info(f"Sending a message to {self.name}")
         res = await self.client.chat_postMessage(channel=self.name, text="Have you completed your time card?")
-        logger.debug(res)
+        logging.debug(res)
 
 
 class Scheduler:
@@ -35,29 +33,29 @@ class Scheduler:
         self.times = []
 
     async def start_async(self):
-        logger.info("Scheduler Started")
+        logging.info("Scheduler Started")
         while True:
             self.times = _get_schedule_times()
-            logger.info(f"Current Time UTC: {datetime.datetime.utcnow()}")
-            logger.info(f"Scheduled Times [{len(self.times)}]: {self.times}")
+            logging.info(f"Current Time UTC: {datetime.datetime.utcnow()}")
+            logging.info(f"Scheduled Times [{len(self.times)}]: {self.times}")
             self.tasks = []
             for t in self.times:
                 self.tasks.append(asyncio.create_task(self.send_at(t)))
 
-            logger.info(f"Tasks Scheduled: {len(self.tasks)}")
+            logging.info(f"Tasks Scheduled: {len(self.tasks)}")
             await asyncio.gather(*self.tasks)
-            logger.info("Done, resetting Channel reminders")
+            logging.info("Done, resetting Channel reminders")
             for c in self.channels:
                 c.timecard_done = False
 
-            logger.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
+            logging.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
             wake_time = today_at(0, 1) + datetime.timedelta(days=1)
-            logger.info(f"Sleeping until {wake_time.isoformat()}")
+            logging.info(f"Sleeping until {wake_time.isoformat()}")
             await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
 
     def add_channel(self, channel_id):
         self.channels.append(Channel(channel_id, self.client))
-        logger.info(f"New Channel Register -> {channel_id}")
+        logging.info(f"New Channel Register -> {channel_id}")
 
     async def send_at(self, sometime: datetime):
         sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
