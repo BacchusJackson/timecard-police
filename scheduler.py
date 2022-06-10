@@ -113,30 +113,31 @@ def get_schedule_times() -> list[datetime]:
 
 async def main():
     await client.connect()
-    while True:
-
-        schedule_times = []
-        try:
-            schedule_times = get_schedule_times()
-        except ValueError as e:
-            logger.error("Invalid value in times file")
-            exit(-1)
-
-        logger.info(f"Schedule Times: {schedule_times}")
-        filtered_schedule = filter_expired(schedule_times)
-        logger.info(f'Filtered Schedule Times: {filtered_schedule}')
-        tasks = []
-        for dt in filtered_schedule:
-            tasks.append(asyncio.create_task(send_reminder_at(dt)))
-
-        await asyncio.gather(*tasks)
-        logger.info("All Schedule tasks complete for the day!")
-        logger.info("Resetting statuses on Schedule...")
-        reset_reminders()
-        logger.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
-        wake_time = today_at(0, 1) + datetime.timedelta(days=1)
-        logger.info(f"Sleeping until {wake_time.isoformat()}")
-        await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
+    await asyncio.sleep(float("inf"))
+    # while True:
+    #
+    #     schedule_times = []
+    #     try:
+    #         schedule_times = get_schedule_times()
+    #     except ValueError as e:
+    #         logger.error("Invalid value in times file")
+    #         exit(-1)
+    #
+    #     logger.info(f"Schedule Times: {schedule_times}")
+    #     filtered_schedule = filter_expired(schedule_times)
+    #     logger.info(f'Filtered Schedule Times: {filtered_schedule}')
+    #     tasks = []
+    #     for dt in filtered_schedule:
+    #         tasks.append(asyncio.create_task(send_reminder_at(dt)))
+    #
+    #     await asyncio.gather(*tasks)
+    #     logger.info("All Schedule tasks complete for the day!")
+    #     logger.info("Resetting statuses on Schedule...")
+    #     reset_reminders()
+    #     logger.info(f"Current UTC Time is: {datetime.datetime.utcnow().isoformat()}")
+    #     wake_time = today_at(0, 1) + datetime.timedelta(days=1)
+    #     logger.info(f"Sleeping until {wake_time.isoformat()}")
+    #     await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
 
 
 if __name__ == "__main__":
