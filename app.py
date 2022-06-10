@@ -3,10 +3,10 @@ import logging
 import os
 
 import yaml
-from slack_bolt import App
-from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_bolt.async_app import AsyncApp
+from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 
-app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
+app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,23 +24,28 @@ def add_to_schedule(channel_id):
 
 
 @app.message("hello")
-def message_hello(message, say):
-    say(f"Howdy <@{message['user']}>!")
+async def message_hello(message, say):
+    await say(f"Howdy <@{message['user']}>!")
 
 
 @app.message("yes")
-def message_yes(message, say):
-    say("Sweet! I'll leave you alone until tomorrow :smile:")
+async def message_yes(message, say):
+    await say("Sweet! I'll leave you alone until tomorrow :smile:")
 
 
 @app.command("/start")
-def reminders_start(ack, respond, body, logger, client, command):
-    ack()
+async def reminders_start(ack, respond, body, logger, client, command):
+    await ack()
     # scheduled[result["channel"]].append(result["scheduled_message_id"])
-    respond("You've got it bud! I'll make sure you don't forget! :thumbsup:")
+    await respond("You've got it bud! I'll make sure you don't forget! :thumbsup:")
     add_to_schedule(body["channel_id"])
 
 
+async def main():
+    handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
+    await handler.start_async()
+
+
 if __name__ == "__main__":
-    print(f"Logging set to {app.logger.level}")
-    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
+    import asyncio
+    asyncio.run(main())
