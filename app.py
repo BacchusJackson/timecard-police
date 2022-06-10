@@ -44,30 +44,29 @@ async def reminders_start(ack, respond, body):
 
 
 async def scheduler():
-    while True:
-        await asyncio.sleep(3)
-        logging.debug(f"Scheduler Task is opening {SCHEDULE_FILE} to check for channels")
-        if not os.path.exists(SCHEDULE_FILE):
-            logging.debug("schedule.yaml does not exist yet. Skip check schedule")
-            continue
+    await asyncio.sleep(5)
+    if not os.path.exists(SCHEDULE_FILE):
+        logging.debug("schedule.yaml does not exist yet. Skip check schedule")
+        return
 
-        schedule = []
-        with open(SCHEDULE_FILE, "r") as file:
-            doc = yaml.full_load(file)
-            logging.debug(doc)
-            if doc in None:
-                logging.debug(f"{SCHEDULE_FILE} is None after loading yaml")
-                continue
-            schedule = doc
+    logging.debug(f"Scheduler Task is opening {SCHEDULE_FILE} to check for channels")
+    schedule = []
+    with open(SCHEDULE_FILE, "r") as file:
+        doc = yaml.full_load(file)
+        logging.debug(doc)
+        if doc in None:
+            logging.debug(f"{SCHEDULE_FILE} is None after loading yaml")
+            return
+        schedule = doc
 
-        for c_id in schedule['channels'].keys():
-            if schedule['channels'][c_id]["done"]:
-                logging.debug(f"Sending a message to {c_id}")
-                result = await app.client.chat_postMessage(
-                    channel=c_id,
-                    text="Hey! Did you complete your time card?"
-                )
-                logging.debug(f"API Result: {result}")
+    for c_id in schedule['channels'].keys():
+        if schedule['channels'][c_id]["done"]:
+            logging.debug(f"Sending a message to {c_id}")
+            result = await app.client.chat_postMessage(
+                channel=c_id,
+                text="Hey! Did you complete your time card?"
+            )
+            logging.debug(f"API Result: {result}")
 
 
 async def main():
