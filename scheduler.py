@@ -112,7 +112,7 @@ class Scheduler:
         return f"Scheduled Times [{len(self.times)}]: {times_str}"
 
 
-def today_at(hour, minutes, seconds=0) -> datetime:
+def today_at(hour: int, minutes: int, seconds=0) -> datetime:
     now = datetime.datetime.utcnow()
     return datetime.datetime(now.year, now.month, now.day, hour, minutes, seconds)
 
@@ -139,6 +139,6 @@ def _get_schedule_times() -> list[datetime]:
     # Parse lines into schedule times
     for line in lines:
         h, m = line.split(" ")
-        schedule_times.append(today_at(h, m))
+        schedule_times.append(today_at(int(h), int(m)))
 
     return schedule_times
