@@ -87,7 +87,7 @@ class Scheduler:
             except ValueError:
                 logging.warning(f"Cannot convert times string to integers ->{item}-<")
                 return False
-            temp_times.append(today_at(h, m) + datetime.timedelta(hours=4))
+            temp_times.append(today_at(h, m))
         self.times = temp_times
         return True
 
@@ -139,6 +139,6 @@ def _get_schedule_times() -> list[datetime]:
     # Parse lines into schedule times
     for line in lines:
         h, m = line.split(" ")
-        schedule_times.append(today_at(h, m) + datetime.timedelta(hours=4))
+        schedule_times.append(today_at(h, m))
 
     return schedule_times
