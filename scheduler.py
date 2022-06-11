@@ -96,7 +96,11 @@ class Scheduler:
         logging.info(f"Scheduled Task, sleep for: {sleep_for}")
         if sleep_for < 0:
             return
-        await asyncio.sleep(sleep_for)
+        try:
+            await asyncio.sleep(sleep_for)
+        except asyncio.CancelledError:
+            return
+
         logging.info(f"Schedule Task awake, checking active channels")
         for channel in [c for c in self.channels if not c.timecard_done]:
             if self.pause:
