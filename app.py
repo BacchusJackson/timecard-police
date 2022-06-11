@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 import os
 import re
@@ -45,6 +46,7 @@ async def message_yes(message, say):
 async def admin_list(message, say):
     if message["user"] == ADMIN:
         await say("Hello Admin, Here are the available commands:\n"
+                  "```current time```\n"
                   "```list channels```\n"
                   "```list times```\n"
                   "```restart scheduler```\n"
@@ -52,6 +54,11 @@ async def admin_list(message, say):
                   "```pause```\n"
                   "```resume```\n"
                   "```shutdown```")
+
+
+@app.message("current time")
+async def current_time(say):
+    await say(datetime.datetime.utcnow().strftime(TIME_FORMAT))
 
 
 @app.message("list channels", middleware=[admin_command])
@@ -72,7 +79,7 @@ async def admin_restart_scheduler(message, say):
 
 @app.message(re.compile("new times .+"), middleware=[admin_command])
 async def admin_new_times(message, say):
-    if not scheduler.set_times(message.text.replace("new times").strip().split(" ")):
+    if not scheduler.set_times(message['text'].replace("new times").strip().split(" ")):
         await say("Invalid format, try again")
         return
     restart_scheduler()
