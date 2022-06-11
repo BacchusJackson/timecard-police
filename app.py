@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import re
 
 from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
@@ -9,7 +10,7 @@ from scheduler import Scheduler
 app = AsyncApp(token=os.environ.get("SLACK_BOT_TOKEN"))
 scheduler = Scheduler(app.client)
 tasks: list[asyncio.Task] = []
-
+ADMIN = os.environ.get("TIMECARD_POLICE_ADMIN")
 # Fri 10 Jun 2022 17:34
 TIME_FORMAT = "%a %d %b %Y %H:%M"
 # Set up logging
@@ -18,12 +19,77 @@ logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logg
 
 @app.message("hello")
 async def message_hello(message, say):
+    logging.info(message)
     await say(f"Howdy <@{message['user']}>!")
 
 
 @app.message("yes")
 async def message_yes(message, say):
+    scheduler.mark_done(message['channel']['id'])
     await say("Sweet! I'll leave you alone until tomorrow :smile:")
+
+
+@app.message("admin")
+async def admin_list(message, say):
+    if message["user"] == ADMIN:
+        await say("Hello Admin, Here are the available commands:\n"
+                  "```list channels```\n"
+                  "```list times```\n"
+                  "```restart scheduler```\n"
+                  "```new times 1000 1030 1100```\n"
+                  "```pause```\n"
+                  "```resume```\n"
+                  "```shutdown```")
+
+
+@app.message("list channels")
+async def admin_list_channels(message, say):
+    if message["user"] == ADMIN:
+        await say(f"Register Channels: {scheduler.channel_list()}")
+
+
+@app.message("list times")
+async def admin_list_times(message, say):
+    if message["user"] == ADMIN:
+        await say(scheduler.times_list())
+
+
+@app.message("reset scheduler")
+async def admin_restart_scheduler(message, say):
+    if message["user"] == ADMIN:
+        restart_scheduler()
+        await say("scheduler has been reset")
+
+
+@app.message(re.compile("new times .+"))
+async def admin_new_times(message, say):
+    if message["user"] == ADMIN:
+        if not scheduler.set_times(message.text.replace("new times").strip().split(" ")):
+            await say("Invalid format, try again")
+            return
+        restart_scheduler()
+        await say(scheduler.times_list())
+
+
+@app.message("pause")
+async def admin_pause(message, say):
+    if message["user"] == ADMIN:
+        scheduler.pause = True
+        await say("Scheduler has been paused, no reminders will be sent.")
+
+
+@app.message("resume")
+async def admin_resume(message, say):
+    if message["user"] == ADMIN:
+        scheduler.pause = False
+        await say("Scheduler has been resumed, reminders will be sent.")
+
+
+@app.message("shutdown")
+async def admin_shutdown(message, say):
+    if message["user"] == ADMIN:
+        await say("Entire app will be shutdown... Good bye!")
+        raise KeyboardInterrupt
 
 
 @app.command("/start")
@@ -31,6 +97,19 @@ async def reminders_start(ack, respond, body):
     await ack()
     await respond("You've got it bud! I'll make sure you don't forget! :thumbsup:")
     scheduler.add_channel(body["channel_id"])
+
+
+@app.command("/stop")
+async def reminders_stop(ack, respond, body):
+    await ack()
+    scheduler.remove_channel(body["channel_id"])
+    await respond("Sorry, I know I'm annoying :cry: I'll leave you alone")
+
+
+def restart_scheduler():
+    tasks[1].cancel()
+    del tasks[1]
+    tasks.append(asyncio.create_task(scheduler.start_async()))
 
 
 async def main():

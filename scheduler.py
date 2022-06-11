@@ -28,19 +28,20 @@ class Scheduler:
     tasks: list
     channels: list[Channel]
     times: list[datetime]
+    pause: bool
 
     def __init__(self, client):
         self.client = client
         self.channels = []
         self.times = []
+        self.pause = False
 
     async def start_async(self):
         logging.info("Scheduler Started")
+        self.times = _get_schedule_times()
         while True:
-            self.times = _get_schedule_times()
             logging.info(f"Current Time UTC: {datetime.datetime.utcnow().strftime(TIME_FORMAT)}")
-            times_str = ', '.join([t.strftime(TIME_FORMAT) for t in self.times])
-            logging.info(f"Scheduled Times [{len(self.times)}]: {times_str}")
+            logging.info(self.times_list())
             self.tasks = []
             for t in self.times:
                 self.tasks.append(asyncio.create_task(self.send_at(t)))
@@ -60,14 +61,48 @@ class Scheduler:
         self.channels.append(Channel(channel_id, self.client))
         logging.info(f"New Channel Register -> {channel_id}")
 
+    def remove_channel(self, channel_id):
+        logging.info(f"Removing Channel {channel_id}")
+        self.channels = [c for c in self.channels if c.name != channel_id]
+        logging.info(f"New Channel List: {self.channels}")
+
+    def mark_done(self, channel_id):
+        logging.info(f"Marking Channel {channel_id} as done")
+        for index, c in enumerate(self.channels):
+            if c.name == channel_id:
+                self.channels[index].timecard_done = True
+
+    def set_times(self, times: list[str]) -> bool:
+        temp_times = []
+        for item in times:
+            if len(item) != 4:
+                logging.warning(f"Invalid times string provided, no change made ->{times}<-")
+                return False
+            try:
+                h = int(item[0:1])
+                m = int(item[2:3])
+            except ValueError:
+                logging.warning(f"Cannot convert times string to integers ->{item}-<")
+                return False
+            temp_times.append(et_to_utc(today_at(h, m)))
+        self.times = temp_times
+        return True
+
     async def send_at(self, sometime: datetime):
         sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
-        if sleep_for < 0:
+        if sleep_for < 0 or self.pause:
             return
         await asyncio.sleep(sleep_for)
         for c in self.channels:
             if not c.timecard_done:
                 await c.send_message()
+
+    def channel_list(self) -> str:
+        return ", ".join([c.name for c in self.channels])
+
+    def times_list(self) -> str:
+        times_str = ', '.join([t.strftime(TIME_FORMAT) for t in self.times])
+        return f"Scheduled Times [{len(self.times)}]: {times_str}"
 
 
 def today_at(hour, minutes, seconds=0) -> datetime:
