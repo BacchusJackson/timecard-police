@@ -88,8 +88,8 @@ class Scheduler:
                 logging.warning(f"Invalid times string provided, no change made ->{times}<-")
                 return False
             try:
-                h = int(item[0:1])
-                m = int(item[2:3])
+                h = int(''.join(item[:2]))
+                m = int(''.join(item[:2]))
             except ValueError:
                 logging.warning(f"Cannot convert times string to integers ->{item}-<")
                 return False
