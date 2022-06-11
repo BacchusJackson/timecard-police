@@ -23,8 +23,8 @@ def restart_scheduler():
     tasks.append(asyncio.create_task(scheduler.start_async()))
 
 
-def admin_command(message) -> bool:
-    logging.info(f"Admin Command called by {message['user']} ->{message.text}<-")
+async def admin_command(message) -> bool:
+    logging.info(f"Admin Command called by {message['user']} ->{message['text']}<-")
     if message["user"] == ADMIN:
         return True
     return False
