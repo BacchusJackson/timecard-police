@@ -87,7 +87,7 @@ class Scheduler:
             except ValueError:
                 logging.warning(f"Cannot convert times string to integers ->{item}-<")
                 return False
-            temp_times.append(et_to_utc(today_at(h, m)))
+            temp_times.append(today_at(h, m) + datetime.timedelta(hours=4))
         self.times = temp_times
         return True
 
@@ -117,10 +117,6 @@ def today_at(hour, minutes, seconds=0) -> datetime:
     return datetime.datetime(now.year, now.month, now.day, hour, minutes, seconds)
 
 
-def et_to_utc(et_date: datetime) -> datetime:
-    return et_date + datetime.timedelta(hours=4)
-
-
 def _gen_time_list(count) -> list[datetime]:
     temp_times = []
     for i in range(count):
@@ -143,6 +139,6 @@ def _get_schedule_times() -> list[datetime]:
     # Parse lines into schedule times
     for line in lines:
         h, m = line.split(" ")
-        schedule_times.append(et_to_utc(today_at(int(h), int(m))))
+        schedule_times.append(today_at(h, m) + datetime.timedelta(hours=4))
 
     return schedule_times
