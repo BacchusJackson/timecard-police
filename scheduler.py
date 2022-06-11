@@ -92,12 +92,14 @@ class Scheduler:
 
     async def send_at(self, sometime: datetime):
         sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
-        if sleep_for < 0 or self.pause:
+        if sleep_for < 0:
             return
         await asyncio.sleep(sleep_for)
-        for c in self.channels:
-            if not c.timecard_done:
-                await c.send_message()
+        for channel in [c for c in self.channels if not c.timecard_done]:
+            if self.pause:
+                logging.warning(f"Schedule is paused, suppressing message to {channel.name}")
+                return
+            await channel.send_message()
 
     def channel_list(self) -> str:
         return ", ".join([c.name for c in self.channels])
