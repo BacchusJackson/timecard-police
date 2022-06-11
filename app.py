@@ -17,6 +17,18 @@ TIME_FORMAT = "%a %d %b %Y %H:%M"
 logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO, datefmt=TIME_FORMAT)
 
 
+def restart_scheduler():
+    tasks[1].cancel()
+    del tasks[1]
+    tasks.append(asyncio.create_task(scheduler.start_async()))
+
+
+def admin_command(message, next):
+    logging.info(f"Admin Command called by {message['user']} ->{message.text}<-")
+    if message["user"] == ADMIN:
+        next()
+
+
 @app.message("hello")
 async def message_hello(message, say):
     logging.info(message)
@@ -29,7 +41,7 @@ async def message_yes(message, say):
     await say("Sweet! I'll leave you alone until tomorrow :smile:")
 
 
-@app.message("admin")
+@app.message("admin", middleware=[admin_command])
 async def admin_list(message, say):
     if message["user"] == ADMIN:
         await say("Hello Admin, Here are the available commands:\n"
@@ -42,54 +54,47 @@ async def admin_list(message, say):
                   "```shutdown```")
 
 
-@app.message("list channels")
+@app.message("list channels", middleware=[admin_command])
 async def admin_list_channels(message, say):
-    if message["user"] == ADMIN:
-        await say(f"Register Channels: {scheduler.channel_list()}")
+    await say(f"Register Channels: {scheduler.channel_list()}")
 
 
-@app.message("list times")
+@app.message("list times", middleware=[admin_command])
 async def admin_list_times(message, say):
-    if message["user"] == ADMIN:
-        await say(scheduler.times_list())
+    await say(scheduler.times_list())
 
 
-@app.message("reset scheduler")
+@app.message("reset scheduler", middleware=[admin_command])
 async def admin_restart_scheduler(message, say):
-    if message["user"] == ADMIN:
-        restart_scheduler()
-        await say("scheduler has been reset")
+    restart_scheduler()
+    await say("scheduler has been reset")
 
 
-@app.message(re.compile("new times .+"))
+@app.message(re.compile("new times .+"), middleware=[admin_command])
 async def admin_new_times(message, say):
-    if message["user"] == ADMIN:
-        if not scheduler.set_times(message.text.replace("new times").strip().split(" ")):
-            await say("Invalid format, try again")
-            return
-        restart_scheduler()
-        await say(scheduler.times_list())
+    if not scheduler.set_times(message.text.replace("new times").strip().split(" ")):
+        await say("Invalid format, try again")
+        return
+    restart_scheduler()
+    await say(scheduler.times_list())
 
 
-@app.message("pause")
+@app.message("pause", middleware=[admin_command])
 async def admin_pause(message, say):
-    if message["user"] == ADMIN:
-        scheduler.pause = True
-        await say("Scheduler has been paused, no reminders will be sent.")
+    scheduler.pause = True
+    await say("Scheduler has been paused, no reminders will be sent.")
 
 
-@app.message("resume")
+@app.message("resume", middleware=[admin_command])
 async def admin_resume(message, say):
-    if message["user"] == ADMIN:
-        scheduler.pause = False
-        await say("Scheduler has been resumed, reminders will be sent.")
+    scheduler.pause = False
+    await say("Scheduler has been resumed, reminders will be sent.")
 
 
-@app.message("shutdown")
+@app.message("shutdown", middleware=[admin_command])
 async def admin_shutdown(message, say):
-    if message["user"] == ADMIN:
-        await say("Entire app will be shutdown... Good bye!")
-        raise KeyboardInterrupt
+    await say("Entire app will be shutdown... Good bye!")
+    raise KeyboardInterrupt
 
 
 @app.command("/start")
@@ -104,12 +109,6 @@ async def reminders_stop(ack, respond, body):
     await ack()
     scheduler.remove_channel(body["channel_id"])
     await respond("Sorry, I know I'm annoying :cry: I'll leave you alone")
-
-
-def restart_scheduler():
-    tasks[1].cancel()
-    del tasks[1]
-    tasks.append(asyncio.create_task(scheduler.start_async()))
 
 
 async def main():

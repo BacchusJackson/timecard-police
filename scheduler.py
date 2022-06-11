@@ -61,6 +61,7 @@ class Scheduler:
         if len([c for c in self.channels if c.name == channel_id]) == 0:
             self.channels.append(Channel(channel_id, self.client))
             logging.info(f"New Channel Register -> {channel_id}")
+            return
         logging.warning(f"Prevented duplicate registration -> {channel_id}")
 
     def remove_channel(self, channel_id):
