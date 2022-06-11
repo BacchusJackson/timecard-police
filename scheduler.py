@@ -19,8 +19,11 @@ class Channel:
 
     async def send_message(self):
         logging.info(f"Sending a message to {self.name}")
-        res = await self.client.chat_postMessage(channel=self.name, text="Have you completed your time card?")
-        logging.debug(res)
+        try:
+            res = await self.client.chat_postMessage(channel=self.name, text="Have you completed your time card?")
+            logging.debug(res)
+        except asyncio.exceptions.CancelledError:
+            return
 
 
 class Scheduler:
@@ -55,7 +58,10 @@ class Scheduler:
             logging.info(f"Current UTC Time is: {datetime.datetime.utcnow().strftime(TIME_FORMAT)}")
             wake_time = today_at(0, 1) + datetime.timedelta(days=1)
             logging.info(f"Sleeping until {wake_time.strftime(TIME_FORMAT)}")
-            await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
+            try:
+                await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
+            except asyncio.exceptions.CancelledError:
+                logging.info("Scheduler has been cancelled")
 
     def add_channel(self, channel_id):
         if len([c for c in self.channels if c.name == channel_id]) == 0:
@@ -98,7 +104,8 @@ class Scheduler:
             return
         try:
             await asyncio.sleep(sleep_for)
-        except asyncio.CancelledError:
+        except asyncio.exceptions.CancelledError:
+            logging.info("Send at task cancelled")
             return
 
         logging.info(f"Schedule Task awake, checking active channels")
