@@ -58,8 +58,10 @@ class Scheduler:
             await asyncio.sleep(wake_time.timestamp() - datetime.datetime.utcnow().timestamp())
 
     def add_channel(self, channel_id):
-        self.channels.append(Channel(channel_id, self.client))
-        logging.info(f"New Channel Register -> {channel_id}")
+        if len([c for c in self.channels if c.name == channel_id]) == 0:
+            self.channels.append(Channel(channel_id, self.client))
+            logging.info(f"New Channel Register -> {channel_id}")
+        logging.warning(f"Prevented duplicate registration -> {channel_id}")
 
     def remove_channel(self, channel_id):
         logging.info(f"Removing Channel {channel_id}")
