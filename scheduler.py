@@ -93,9 +93,11 @@ class Scheduler:
 
     async def send_at(self, sometime: datetime):
         sleep_for = sometime.timestamp() - datetime.datetime.utcnow().timestamp()
+        logging.info(f"Scheduled Task, sleep for: {sleep_for}")
         if sleep_for < 0:
             return
         await asyncio.sleep(sleep_for)
+        logging.info(f"Schedule Task awake, checking active channels")
         for channel in [c for c in self.channels if not c.timecard_done]:
             if self.pause:
                 logging.warning(f"Schedule is paused, suppressing message to {channel.name}")

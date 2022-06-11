@@ -23,11 +23,10 @@ def restart_scheduler():
     tasks.append(asyncio.create_task(scheduler.start_async()))
 
 
-async def admin_command(message) -> bool:
+async def admin_command(message, next):
     logging.info(f"Admin Command called by {message['user']} ->{message['text']}<-")
     if message["user"] == ADMIN:
-        return True
-    return False
+        await next()
 
 
 @app.message("hello")
@@ -114,7 +113,6 @@ async def reminders_stop(ack, respond, body):
 
 async def main():
     handler = AsyncSocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
-
     tasks.append(asyncio.create_task(handler.start_async()))
     tasks.append(asyncio.create_task(scheduler.start_async()))
     await asyncio.gather(*tasks)
